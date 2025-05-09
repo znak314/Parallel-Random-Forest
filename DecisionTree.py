@@ -1,5 +1,5 @@
 import numpy as np
-
+from concurrent.futures import ThreadPoolExecutor
 
 class Node:
   def __init__(self, feature=None, threshold=None, left=None, right=None, value = None):
@@ -14,9 +14,10 @@ class Node:
     
 
 class DecisionTree:
-    def __init__(self, max_depth=5, min_samples=10):
+    def __init__(self, max_depth=5, min_samples=10, parallel=False):
         self.max_depth = max_depth
         self.min_samples = min_samples
+        self.parallel = parallel
         self.tree = None
         
     def fit(self, X, y):
@@ -51,6 +52,35 @@ class DecisionTree:
                     best_threshold = threshold
         return best_feature, best_threshold
     
+    def parallel_best_split(self, X, y):
+        best_feature, best_threshold = None, None
+        best_gain = -1
+        
+        n_columns_to_select = int(np.sqrt(X.shape[1]))
+        indices = np.random.choice(X.shape[1], size=n_columns_to_select, replace=False)
+
+        def process_column(i):
+            thresholds = np.unique(X[:, i])
+            local_best_gain = -1
+            local_best_threshold = None
+            for threshold in thresholds:
+                gain = self.information_gain(X[:, i], y, threshold)
+                if gain > local_best_gain:
+                    local_best_gain = gain
+                    local_best_threshold = threshold
+            return i, local_best_threshold, local_best_gain
+        
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(process_column, indices))
+
+        for i, local_best_threshold, local_best_gain in results:
+            if local_best_gain > best_gain:
+                best_gain = local_best_gain
+                best_feature = i
+                best_threshold = local_best_threshold
+
+        return best_feature, best_threshold
+    
     def information_gain(self, X_column, y, threshold):
         if len(np.unique(y)) == 1:
             return 0
@@ -74,8 +104,11 @@ class DecisionTree:
         if n_samples <= self.min_samples or depth >= self.max_depth or n_labels == 1:
             return Node(value=self.mode(y))
         
-        best_feature, best_threshold = self.best_split(X, y)
-        
+        if self.parallel:
+            best_feature, best_threshold = self.parallel_best_split(X, y)
+        else:
+            best_feature, best_threshold = self.best_split(X, y)
+
         left_indexes = np.argwhere(X[:, best_feature] <= best_threshold).flatten()
         right_indexes = np.argwhere(X[:, best_feature] > best_threshold).flatten()
         

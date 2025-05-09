@@ -3,7 +3,7 @@ from joblib import Parallel, delayed
 from DecisionTree import DecisionTree
 
 
-class TreeLevelParallelRandomForest:
+class ForestLevelParallelRandomForest:
     def __init__(self, n_trees=3, max_depth=50, min_samples=5, n_jobs=2):
         self.n_trees = n_trees
         self.max_depth = max_depth
