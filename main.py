@@ -16,7 +16,7 @@ class RandomForestBenchmark:
         self.min_samples = min_samples
         self.sample_sizes = sample_sizes or [500, 1000, 2000, 5000]
         self.tree_counts = tree_counts or [10, 20, 50, 100]
-        self.thread_counts = thread_counts or [4, 8, 12]
+        self.thread_counts = thread_counts or [4, 8, 6, 12]
         self.results = []
 
     def generate_data(self, n_samples):
@@ -62,18 +62,14 @@ class RandomForestBenchmark:
                         acc_rf_list.append(acc_rf)
                         time_rf_list.append(time_rf)
 
-                        combined_rf = CombinedParallelRandomForest(
-                            num_tree, self.max_depth, self.min_samples, n_jobs=num_thread)
-                        pred_combined, acc_combined, time_combined = self.evaluate_model(
-                            combined_rf, X_train, y_train, X_test, y_test, seeds)
+                        combined_rf = CombinedParallelRandomForest(num_tree, self.max_depth, self.min_samples, n_jobs=num_thread)
+                        pred_combined, acc_combined, time_combined = self.evaluate_model(combined_rf, X_train, y_train, X_test, y_test, seeds)
                         assert np.array_equal(pred_rf, pred_combined), "Combined RF predictions differ from original!"
                         acc_combined_list.append(acc_combined)
                         time_combined_list.append(time_combined)
 
-                        forest_rf = ForestLevelParallelRandomForest(
-                            num_tree, self.max_depth, self.min_samples, n_jobs=num_thread)
-                        pred_forest, acc_forest, time_forest = self.evaluate_model(
-                            forest_rf, X_train, y_train, X_test, y_test, seeds)
+                        forest_rf = ForestLevelParallelRandomForest(num_tree, self.max_depth, self.min_samples, n_jobs=num_thread)
+                        pred_forest, acc_forest, time_forest = self.evaluate_model(forest_rf, X_train, y_train, X_test, y_test, seeds)
                         assert np.array_equal(pred_rf, pred_forest), "Forest-level RF predictions differ from original!"
                         acc_forest_list.append(acc_forest)
                         time_forest_list.append(time_forest)

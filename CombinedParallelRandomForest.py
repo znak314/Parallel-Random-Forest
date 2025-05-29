@@ -13,6 +13,7 @@ def build_tree_for_forest(X, y, seed, max_depth, min_samples):
 def predict_tree(tree, X):
     return tree.predict(X)
 
+
 class CombinedParallelRandomForest:
     def __init__(self, n_trees=3, max_depth=50, min_samples=5, n_jobs=1, random_state=None):
         self.n_trees = n_trees
